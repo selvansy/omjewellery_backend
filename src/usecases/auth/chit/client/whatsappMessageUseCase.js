@@ -1,4 +1,5 @@
 import { isValidObjectId } from "mongoose";
+import config from "../../../../config/chit/env.js";
 
 class WhatsappMessageUsecas{
     constructor(
@@ -225,7 +226,7 @@ class WhatsappMessageUsecas{
                  if(customer.whatsapp !== ''){
                     const resplacements ={
                         cusmobile:customer.whatsapp,
-                        imagepath:`${s3Configs.s3display_url}webadmin/assets/img/${result.img}`,
+                        imagepath:`${s3Configs.s3display_url}${config.AWS_LOCAL_PATH}img/${result.img}`,
                         cusname:`${customer?.firstname} ${customer?.lastname}`
                     }
                     const message = await this.urlConstructor(whatsappUrl,resplacements)

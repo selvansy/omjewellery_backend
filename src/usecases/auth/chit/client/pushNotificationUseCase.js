@@ -1,6 +1,7 @@
 import { Error, isValidObjectId } from "mongoose";
 import axios from "axios";
 import mongoose from "mongoose";
+import config from "../../../../config/chit/env.js";
  
 
 class PushNotificationUseCase {
@@ -96,7 +97,7 @@ class PushNotificationUseCase {
             en: noti_name,
           };
 
-          const notifyImage = `${configuration.s3display_url}webadmin/assets/pushnotificaiton/${result.noti_image}`;
+          const notifyImage = `${configuration.s3display_url}${config.AWS_LOCAL_PATH}pushnotificaiton/${result.noti_image}`;
 
           const iosImage = {
             id1: notifyImage,

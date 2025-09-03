@@ -3,6 +3,7 @@ import PromotionCustomer from '../../models/chit/notify/promotionCustomersModel.
 import pushNotificationModel from "../../models/chit/notify/pushNotificationModel.js";
 import mongoose from "mongoose";
 import schemeAccountModel from "../../models/chit/schemeAccountModel.js";
+import config from "../../../config/chit/env.js";
  
 class PushNotificationRepository { 
   
@@ -104,7 +105,7 @@ class PushNotificationRepository {
             pathurl: {
               $concat: [
                 "$bucketSettings.s3display_url",
-                "webadmin/assets/img/pushnotification/",
+                `${config.AWS_LOCAL_PATH}img/pushnotification/`,
               ],
             },
           },

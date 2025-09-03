@@ -1,3 +1,4 @@
+import config from '../../../config/chit/env.js';
 import weddingModel from '../../models/chit/weddingBrithSettingsModel.js'
 
 class WeddigRepository{
@@ -26,7 +27,7 @@ class WeddigRepository{
                         pathurl: {
                             $concat: [
                                 "$bucketSettings.s3display_url",
-                                "webadmin/assets/img/wedding/"
+                                `${config.AWS_LOCAL_PATH}img/wedding/`
                             ]
                         }
                     }
@@ -92,7 +93,7 @@ class WeddigRepository{
                         pathurl: {
                             $concat: [
                                 "$bucketSettings.s3display_url",
-                                "webadmin/assets/img/wedding/"
+                                `${config.AWS_LOCAL_PATH}img/wedding/`
                             ]
                         }
 
@@ -141,7 +142,7 @@ class WeddigRepository{
                         pathurl: {
                             $concat: [
                                 "$s3details.s3display_url",
-                                "webadmin/assets/img/wedding/"
+                                `${config.AWS_LOCAL_PATH}img/wedding/`
                             ]
                         },
                     },

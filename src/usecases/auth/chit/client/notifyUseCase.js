@@ -10,6 +10,8 @@ import NotificationPromotionHistoryRepository from "../../../../infrastructure/r
 import smsService from "../../../../config/chit/smsService.js";
 import TopupRepository from "../../../../infrastructure/repositories/chit/topupRepository.js";
 import SmsSettingRepository from '../../../../infrastructure/repositories/chit/super/smsSettingRepository.js'
+import config from "../../../../config/chit/env.js";
+
 
 
 class NotifyUsecase {
@@ -515,7 +517,7 @@ class NotifyUsecase {
         recipients: chunk,
         title,
         message: body,
-        imageUrl: `https://aupay-img.s3.eu-north-1.amazonaws.com/aupay/webadmin/assets/notification/${imageUrl}`,
+        imageUrl: `https://aupay-img.s3.eu-north-1.amazonaws.com/${config.AWS_LOCAL_PATH}notification/${imageUrl}`,
         channel: "push",
         });
 

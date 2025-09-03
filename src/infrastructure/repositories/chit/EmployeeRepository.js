@@ -1,5 +1,6 @@
 import employeeModel from "../../models/chit/employeeModel.js";
 import mongoose from "mongoose";
+import config from "../../../config/chit/env.js";
 
 class EmployeeRepository {
   async findOne(query) {
@@ -127,7 +128,7 @@ class EmployeeRepository {
                 pathurl: {
                     $concat: [
                         "$s3Details.s3display_url",
-                        "aupay/webadmin/assets/employee/",
+                        `${config.AWS_LOCAL_PATH}employee/`,
                     ],
                 },
             },
