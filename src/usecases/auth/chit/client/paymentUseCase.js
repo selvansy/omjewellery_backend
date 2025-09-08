@@ -318,27 +318,33 @@ class PaymentUseCase {
     }
   };
 
-  async updatePaymentReceipt(generalSetting, scheme, recieptNumber, schemeId) {
-    try {
-      const lastPayment = await this.paymentRepository.lastPayment(schemeId);
+  generateReceiptNumber(objid, start = "REC", end) {
+    const last4 = objid.toString().slice(-4);
 
-      return lastPayment ?  lastPayment.payment_receipt + 1 : 1
-
-      // if (generalSetting.display_receiptno) {
-      //   return lastPayment
-      //     ? lastPayment.payment_receipt + 1
-      //     : scheme.payment_receipt;
-      // } else if (generalSetting.display_receiptno === 4) {
-      //   return recieptNumber;
-      // } else {
-      //   return lastPayment
-      //     ? lastPayment.payment_receipt + 1
-      //     : scheme.payment_receipt;
-      // }
-    } catch (error) {
-      console.error("Error updating payment receipt:", error.message);
-      throw error;
+    if (!end) {
+      end = `${start}/${last4}/a01`;
     }
+
+    const match = end.match(/([a-z])(\d{2})$/);
+    if (!match) {
+      return `${start}/${last4}/a01`;
+    }
+
+    const [currentLetter, currentNumStr] = match.slice(1);
+    let nextLetter = currentLetter;
+    let nextNum = parseInt(currentNumStr, 10) + 1;
+
+    if (nextNum > 99) {
+      nextNum = 1;
+      if (currentLetter === "z") {
+        nextLetter = "a";
+      } else {
+        nextLetter = String.fromCharCode(currentLetter.charCodeAt(0) + 1);
+      }
+    }
+
+    const newEnd = `${nextLetter}${String(nextNum).padStart(2, "0")}`;
+    return `${start}/${last4}/${newEnd}`;
   }
 
   toDateOnlyString(date) {
@@ -385,12 +391,12 @@ class PaymentUseCase {
             data.id_scheme_account
           );
 
-        // if (
-        //   Number(totalInstallments) + Number(data.installments) >
-        //   Number(schemeData.total_installments)
-        // ) {
-        //   return { status: false, message: "Scheme installment limit reached" };
-        // }
+        if (
+          Number(totalInstallments) + Number(data.installments) >
+          Number(schemeData.total_installments)
+        ) {
+          return { status: false, message: "Scheme installment limit reached" };
+        }
 
         const monthlyPaiments = await this.paymentRepository.getMonthlyPayments(
           {
@@ -448,11 +454,12 @@ class PaymentUseCase {
           };
         }
 
-        const paymentReceipt = await this.updatePaymentReceipt(
-          generalSettings,
-          schemeData,
-          data.payment_receipt,
-          data.id_scheme
+        let Lastpayment = await this.paymentRepository.lastPaymentReciept();
+
+        const paymentReceipt = this.generateReceiptNumber(
+          data.id_scheme_account,
+          "REC",
+          Lastpayment?.payment_receipt || "REC/0001/a01"
         );
 
         let metalWeight = 0;
@@ -770,11 +777,12 @@ class PaymentUseCase {
           message: "No general settings found for this branch",
         };
 
-      const paymentReceipt = await this.updatePaymentReceipt(
-        generalSettings,
-        scheme,
-        data.payment_receipt,
-        data.id_scheme
+     let Lastpayment = await this.paymentRepository.lastPaymentReciept();
+
+      const paymentReceipt = this.generateReceiptNumber(
+        data.id_scheme_account,
+        "REC",
+        Lastpayment?.payment_receipt || "REC/0001/a01"
       );
 
       const totalAmount =
@@ -1243,17 +1251,17 @@ class PaymentUseCase {
 
         const lastPaid = lastPaidData ? new Date(lastPaidData.createdAt) : null;
 
-        if(extraData?.digigold && extraData?.digigold == false){
-          if (
-            lastPaid &&
-            this.toDateOnlyString(lastPaid) === this.toDateOnlyString(todayDate)
-          ) {
-            return {
-              success: false,
-              message: "Already completed today's payment for one of the schemes",
-            };
-          }
-        }
+        // if(extraData?.digigold && extraData?.digigold == false){
+        //   if (
+        //     lastPaid &&
+        //     this.toDateOnlyString(lastPaid) === this.toDateOnlyString(todayDate)
+        //   ) {
+        //     return {
+        //       success: false,
+        //       message: "Already completed today's payment for one of the schemes",
+        //     };
+        //   }
+        // }
 
         const totalInstallments =
           await this.paymentRepository.totalInstallments(
@@ -1335,12 +1343,14 @@ class PaymentUseCase {
           data.id_scheme_account
         );
 
-        const paymentReceipt = await this.updatePaymentReceipt(
-          generalSettings,
-          schemeData,
-          data.payment_receipt,
-          data.id_scheme
+        let Lastpayment = await this.paymentRepository.lastPaymentReciept();
+
+        const paymentReceipt = this.generateReceiptNumber(
+          data.id_scheme_account,
+          "REC",
+          Lastpayment?.payment_receipt || "REC/0001/a01"
         );
+        
         const runningTotalAmount =
           (Number(lastPaidData?.total_amt) || 0) + Number(data.amount);
 
@@ -1363,7 +1373,7 @@ class PaymentUseCase {
           id_scheme: schemeAccData.id_scheme,
           payment_amount: data.amount,
           metal_weight: data.weight || 0,
-          installment: Number(schemeAccData.paid_installments) + Number(data?.paid_installments)
+          installment: Number(schemeAccData.paid_installments) + 1
         };
 
 
@@ -1896,6 +1906,20 @@ class PaymentUseCase {
         return;
       }
 
+       if(updatedPaymentOrder){
+      const notificationData = await isNotificationEnabled("paymentProceed");
+
+        const userData = {
+          id_customer: customer?._id
+        };
+
+        await this.paymentNotifications(
+          userData,
+          updatedPaymentOrder,
+          notificationData
+        );
+     }
+
       const paymentMode = this.formatPaymentGroup(data?.data?.payment?.payment_group);
 
       const schemeBulk = [];
@@ -1957,7 +1981,7 @@ class PaymentUseCase {
         });
       }
 
-      // Execute bulk operations
+
       await Promise.all([
         this.schemeAccountRepository.bulkWrite(schemeBulk),
         this.paymentRepository.bulkWrite(paymentBulk),
@@ -2033,6 +2057,32 @@ class PaymentUseCase {
     } catch (error) {
       console.error("Error in completePayment:", error);
       throw error;
+    }
+  }
+
+  async paymentNotifications(
+    data,
+    updatedPaymentOrder,
+    notificationData
+  ) {
+    if (notificationData.push) {
+     const inputMsg = {
+          recipients: [data.id_customer],
+          title: "Payment Received",
+          message: `Your payment of ₹${updatedPaymentOrder?.payment_amount} was successfully received.`,
+          channel: "push",
+        };
+
+        await smsService.sendNotification(inputMsg);
+        await this.saveNotificationUsecase.saveNotification(
+          {
+            title: inputMsg.title,
+            message: inputMsg.message,
+            type: "alert",
+            category: "Payment",
+          },
+          data.id_customer
+        );
     }
   }
 }

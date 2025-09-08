@@ -2085,13 +2085,16 @@ class SchemeAccountUseCase {
         // if ([0, 1, 2].includes(scheme.scheme_type)) {
         //   arrobject.scheme_name = `${scheme.scheme_name} (Rs. ${scheme.amount})`;
         // } else
-        if ([0, 1, 2, 5, 6, 7, 8, 9, 10, 11].includes(scheme?.scheme_type)) {
-          arrobject.scheme_name = `${scheme.scheme_name} (Rs. ${scheme?.min_amount} - ${scheme?.max_amount})`;
-        } else if ([12, 3, 4].includes(scheme?.scheme_type)) {
-          arrobject.scheme_name = `${scheme?.scheme_name} (Gm ${scheme?.min_weight} - ${scheme?.max_weight})`;
-        } else {
-          arrobject.scheme_name = `${scheme?.scheme_name} (Rs. ${scheme?.amount})`;
-        }
+        // if ([0, 1, 2, 5, 6, 7, 8, 9, 10, 11].includes(scheme?.scheme_type)) {
+        //   arrobject.scheme_name = `${scheme.scheme_name} (Rs. ${scheme?.min_amount} - ${scheme?.max_amount})`;
+        // } else if ([12, 3, 4].includes(scheme?.scheme_type)) {
+        //   arrobject.scheme_name = `${scheme?.scheme_name} (Gm ${scheme?.min_weight} - ${scheme?.max_weight})`;
+        // } else {
+        //   arrobject.scheme_name = `${scheme?.scheme_name} (Rs. ${scheme?.amount})`;
+        // }
+          if (scheme?.scheme_type) {
+          arrobject.scheme_name = `${scheme?.scheme_name}`;
+         }
 
         const [
           schemetype,
@@ -2139,7 +2142,6 @@ class SchemeAccountUseCase {
         arrobject.scheme_acc_number = account?.scheme_acc_number;
         arrobject.status_name = this.getStatusName(account?.status);
         arrobject.created_through = this.addedby(account?.added_by);
-
         return arrobject;
       });
 

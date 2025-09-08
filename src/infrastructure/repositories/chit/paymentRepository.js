@@ -32,22 +32,6 @@ class PaymentRepository {
     }
   }
 
-  // async lastPayment(schemeId) {
-  //   try {
-  //     const lastPayment = await paymentModel
-  //       .findOne({ id_scheme: schemeId })
-  //       .sort({ payment_receipt: -1 })
-  //       .select("payment_receipt");
-
-  //     if (!lastPayment) {
-  //       return null;
-  //     }
-
-  //     return lastPayment;
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // }
   async lastPayment(schemeId) {
     try {
       const lastPayment = await paymentModel
@@ -61,6 +45,20 @@ class PaymentRepository {
       throw error;
     }
   }
+
+  async lastPaymentReciept() {
+  try {
+    const lastPayment = await paymentModel
+      .findOne()
+      .sort({ createdAt: -1 })
+      .select("payment_receipt");
+
+    return lastPayment || null;
+  } catch (error) {
+    console.error("Error fetching last payment:", error);
+    throw error;
+  }
+}
 
   async addPayment(data) {
     try {

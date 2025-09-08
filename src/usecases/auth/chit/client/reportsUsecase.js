@@ -1,10 +1,12 @@
 import { isValidObjectId, Types } from "mongoose";
 import mongoose from "mongoose";
 import moment from "moment-timezone";
+import CustomerRepository from "../../../../infrastructure/repositories/chit/CustomerRepository.js";
 class ReportUseCase {
   constructor(reportRepo, branchRepo) {
     this.reportRepo = reportRepo;
     this.branchRepo = branchRepo;
+     this.customerRepo =  new CustomerRepository();
   }
 
   addOneDay(dateStr) {
@@ -295,6 +297,7 @@ class ReportUseCase {
         if (new Date(to_date) < new Date(from_date)) {
           throw new Error("End date cannot be before start date");
         }
+        console.log("qwertyu",search)
   
         // Convert to UTC with timezone adjustment (Asia/Kolkata - UTC+5:30)
         const startDate = moment.tz(from_date, 'Asia/Kolkata').startOf('day').toDate();
@@ -340,15 +343,39 @@ class ReportUseCase {
       }
   
       // Search functionality
+      // if (search) {
+      //   const searchRegex = new RegExp(search, "i");
+      //   query.$or = [
+      //     { id_transaction: { $regex: searchRegex } },
+      //     { remark: { $regex: searchRegex } },
+      //     { itr_utr: { $regex: searchRegex } },
+      //     // { customer_mobile :{$regex:searchRegex}}
+      //     // { account_name: { $regex: searchTerm, $options: "i" } },
+      //     // { scheme_acc_number: { $regex: searchTerm, $options: "i" } },
+      //   ];
+      // }
+       let customerIdForSearch = null;
       if (search) {
-        const searchRegex = new RegExp(search, "i");
-        query.$or = [
-          { id_transaction: { $regex: searchRegex } },
-          { remark: { $regex: searchRegex } },
-          { itr_utr: { $regex: searchRegex } },
-          { account_name: { $regex: searchTerm, $options: "i" } },
-          { scheme_acc_number: { $regex: searchTerm, $options: "i" } },
-        ];
+        // Check if search is a mobile number (10 digits)
+        const isMobileNumber = /^\d{10}$/.test(search);
+        
+        if (isMobileNumber) {
+          // Find customer by mobile number
+          const customer = await this.customerRepo.findOne({ mobile: Number(search) });
+          if (customer) {
+            customerIdForSearch = customer._id;
+          } else {
+            // If no customer found with this mobile, return empty results
+            return {
+              success: true,
+              message: "Payment data retrieved successfully",
+              totalDocuments: 0,
+              totalPages: 0,
+              currentPage: parseInt(page) || 1,
+              data: [],
+            };
+          }
+        }
       }
   
       // Pagination
@@ -360,10 +387,13 @@ class ReportUseCase {
       const { totalDocuments, totalPages, data } = await this.reportRepo.getPaymentReport(
         query,
         skip,
-        perPage
+        perPage,
+        {},
+        search,
+        customerIdForSearch
       );
 
-      console.log(data,"data")
+      // console.log(data,"data")
   
       return {
         success: true,
